@@ -87,7 +87,7 @@ func new(c *C, p string) (*roundrobin.RoundRobin, *Buffer) {
 	lb, err := roundrobin.New(fwd)
 	c.Assert(err, IsNil)
 
-	// stream handler will forward requests to redirect, make sure it uses files
+	// buffer handler will forward requests to redirect, make sure it uses files
 	st, err := New(lb, Logger(logger), Retry(p), MemRequestBodyBytes(1))
 	c.Assert(err, IsNil)
 
