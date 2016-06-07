@@ -33,7 +33,7 @@ Examples of a streaming middleware:
   stream.New(handler, stream.Retry(`IsNetworkError() && Attempts() <= 2`))
 
 */
-package buffer
+package steam
 
 import (
 	"fmt"
@@ -56,9 +56,9 @@ const (
 
 var errHandler utils.ErrorHandler = &SizeErrHandler{}
 
-// Buffer is responsible for buffering requests and responses
+// Stream is responsible for buffering requests and responses
 // It buffers large reqeuests and responses to disk,
-type Buffer struct {
+type Stream struct {
 	maxRequestBodyBytes int64
 	memRequestBodyBytes int64
 
@@ -73,8 +73,8 @@ type Buffer struct {
 }
 
 // New returns a new streamer middleware. New() function supports optional functional arguments
-func New(next http.Handler, setters ...optSetter) (*Buffer, error) {
-	strm := &Buffer{
+func New(next http.Handler, setters ...optSetter) (*Stream, error) {
+	strm := &Stream{
 		next: next,
 
 		maxRequestBodyBytes: DefaultMaxBodyBytes,
@@ -99,7 +99,7 @@ func New(next http.Handler, setters ...optSetter) (*Buffer, error) {
 	return strm, nil
 }
 
-type optSetter func(s *Buffer) error
+type optSetter func(s *Stream) error
 
 // Retry provides a predicate that allows stream middleware to replay the request
 // if it matches certain condition, e.g. returns special error code. Available functions are:
@@ -113,7 +113,7 @@ type optSetter func(s *Buffer) error
 // `Attempts() <= 2 && ResponseCode() == 502`
 //
 func Retry(predicate string) optSetter {
-	return func(s *Buffer) error {
+	return func(s *Stream) error {
 		p, err := parseExpression(predicate)
 		if err != nil {
 			return err
@@ -125,7 +125,7 @@ func Retry(predicate string) optSetter {
 
 // Logger sets the logger that will be used by this middleware.
 func Logger(l utils.Logger) optSetter {
-	return func(s *Buffer) error {
+	return func(s *Stream) error {
 		s.log = l
 		return nil
 	}
@@ -133,7 +133,7 @@ func Logger(l utils.Logger) optSetter {
 
 // ErrorHandler sets error handler of the server
 func ErrorHandler(h utils.ErrorHandler) optSetter {
-	return func(s *Buffer) error {
+	return func(s *Stream) error {
 		s.errHandler = h
 		return nil
 	}
@@ -141,7 +141,7 @@ func ErrorHandler(h utils.ErrorHandler) optSetter {
 
 // MaxRequestBodyBytes sets the maximum request body size in bytes
 func MaxRequestBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(s *Stream) error {
 		if m < 0 {
 			return fmt.Errorf("max bytes should be >= 0 got %d", m)
 		}
@@ -153,7 +153,7 @@ func MaxRequestBodyBytes(m int64) optSetter {
 // MaxRequestBody bytes sets the maximum request body to be stored in memory
 // stream middleware will serialize the excess to disk.
 func MemRequestBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(s *Stream) error {
 		if m < 0 {
 			return fmt.Errorf("mem bytes should be >= 0 got %d", m)
 		}
@@ -164,7 +164,7 @@ func MemRequestBodyBytes(m int64) optSetter {
 
 // MaxResponseBodyBytes sets the maximum request body size in bytes
 func MaxResponseBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(s *Stream) error {
 		if m < 0 {
 			return fmt.Errorf("max bytes should be >= 0 got %d", m)
 		}
@@ -176,7 +176,7 @@ func MaxResponseBodyBytes(m int64) optSetter {
 // MemResponseBodyBytes sets the maximum request body to be stored in memory
 // stream middleware will serialize the excess to disk.
 func MemResponseBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(s *Stream) error {
 		if m < 0 {
 			return fmt.Errorf("mem bytes should be >= 0 got %d", m)
 		}
@@ -186,12 +186,12 @@ func MemResponseBodyBytes(m int64) optSetter {
 }
 
 // Wrap sets the next handler to be called by stream handler.
-func (s *Buffer) Wrap(next http.Handler) error {
+func (s *Stream) Wrap(next http.Handler) error {
 	s.next = next
 	return nil
 }
 
-func (s *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (s *Stream) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if err := s.checkLimit(req); err != nil {
 		s.log.Infof("request body over limit: %v", err)
 		s.errHandler.ServeHTTP(w, req, err)
@@ -275,7 +275,7 @@ func (s *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *Buffer) copyRequest(req *http.Request, body io.ReadCloser, bodySize int64) *http.Request {
+func (s *Stream) copyRequest(req *http.Request, body io.ReadCloser, bodySize int64) *http.Request {
 	o := *req
 	o.URL = utils.CopyURL(req.URL)
 	o.Header = make(http.Header)
@@ -288,7 +288,7 @@ func (s *Buffer) copyRequest(req *http.Request, body io.ReadCloser, bodySize int
 	return &o
 }
 
-func (s *Buffer) checkLimit(req *http.Request) error {
+func (s *Stream) checkLimit(req *http.Request) error {
 	if s.maxRequestBodyBytes <= 0 {
 		return nil
 	}
