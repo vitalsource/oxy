@@ -1,4 +1,4 @@
-package stream
+package buffer
 
 import (
 	"net/http"
@@ -77,7 +77,7 @@ func (s *RTSuite) TestRetryExceedAttempts(c *C) {
 	c.Assert(re.StatusCode, Equals, http.StatusBadGateway)
 }
 
-func new(c *C, p string) (*roundrobin.RoundRobin, *Streamer) {
+func new(c *C, p string) (*roundrobin.RoundRobin, *Bufferer) {
 	logger := utils.NewFileLogger(os.Stdout, utils.INFO)
 	// forwarder will proxy the request to whatever destination
 	fwd, err := forward.New(forward.Logger(logger))
