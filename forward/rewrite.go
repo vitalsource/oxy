@@ -40,10 +40,12 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 		req.Header.Set(XForwardedHost, req.Host)
 	}
 
+	reqmillis := time.Now().UnixNano() / 1000000
+	reqstart := strconv.FormatInt(reqmillis, 10)
 	if xrs := req.Header.Get(XRequestStart); xrs != "" {
 		req.Header.Set(XRequestStart, xrs)
 	} else {
-		req.Header.Set(XRequestStart, strconv.FormatInt((time.Now().UnixNano() / 1000000), 10, 64))
+		req.Header.Set(XRequestStart, reqstart)
 	}
 
 	if rw.Hostname != "" {
