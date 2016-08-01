@@ -4,7 +4,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/vulcand/oxy/utils"
