@@ -4,6 +4,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"fmt"
+	"time"
 
 	"github.com/vulcand/oxy/utils"
 )
@@ -41,7 +43,7 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 	if xrs := req.Header.Get(XForwardedHost); xrs != "" {
 		req.Header.Set(XRequestStart, xrs)
 	} else {
-		req.Header.Set(XRequestStart, now.UnixNano() / 1000000)
+		req.Header.Set(XRequestStart, time.Now().UnixNano() / 1000000)
 	}
 
 	if rw.Hostname != "" {
