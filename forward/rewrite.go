@@ -40,7 +40,7 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 		req.Header.Set(XForwardedHost, req.Host)
 	}
 
-	if xrs := req.Header.Get(XForwardedHost); xrs != "" {
+	if xrs := req.Header.Get(XRequestStart); xrs != "" {
 		req.Header.Set(XRequestStart, xrs)
 	} else {
 		req.Header.Set(XRequestStart, strconv.FormatInt((time.Now().UnixNano() / 1000000), 64))
