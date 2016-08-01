@@ -38,6 +38,12 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 		req.Header.Set(XForwardedHost, req.Host)
 	}
 
+	if xrs := req.Header.Get(XForwardedHost); xrs != "" {
+		req.Header.Set(XRequestStart, xrs)
+	} else {
+		req.Header.Set(XRequestStart, now.UnixNano() / 1000000)
+	}
+
 	if rw.Hostname != "" {
 		req.Header.Set(XForwardedServer, rw.Hostname)
 	}
